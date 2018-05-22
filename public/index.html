@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; padding-top: 40px}
+
+      #user-input { background: #000; padding: 3px; position: fixed; top: 0; width: 100%; }
+      #user-input input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      #user-input button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+
+      #chat-input { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      #chat-input input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      #chat-input button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+    </style>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <form id='user-input'>
+      <input id="user" placeholder="enter user name" autocomplete="off" /><button>Add</button>
+    </form>
+    <form id='chat-input'>
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      $(function () {
+        var socket = io();
+        $('#chat-input').submit(function(){
+          socket.emit('chat message', $('#m').val());
+          let message = $('#m').val();
+          $('#messages').append($('<li>').text(message));
+          return false;
+        });
+        
+        $('#chat-input').change(function(){
+          socket.emit('typing', 'user typing');
+          return false;
+        });
+
+        $('#user-input').submit(function(){
+          socket.emit('user', $('#user').val());
+          return false;
+        });
+
+        socket.on('disconnect', function(msg){
+          $('#messages').append($(`<li class='disconnected'>`).text(msg));
+            setTimeout(() => {
+            $('.disconnected').remove();
+          }, 5000);
+        })
+
+        socket.on('user', function(user){
+          $('#messages').append($(`<li>`).text(user));
+        })
+
+        socket.on('typing', function(alert){
+          $('#messages').append($(`<li class='alert'>`).text(alert));
+          setTimeout(() => {
+            $('.alert').remove();
+          }, 2000);
+        });
+
+        socket.on('chat message', function(msg){
+          $('#messages').append($('<li>').text(msg));
+        });
+      });
+    </script>
+  </body>
+</html>
